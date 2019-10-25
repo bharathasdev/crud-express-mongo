@@ -3,10 +3,22 @@ const app = express()
 const bodyParser = require('body-parser')
 const MongoClient = require('mongodb').MongoClient
 
+const process = require('process');
+
+process.on('beforeExit', (code) => {
+  console.log('Process beforeExit event with code: ', code);
+});
+
+process.on('exit', (code) => {
+  console.log('Process exit event with code: ', code);
+});
+
+console.log('This message is displayed first.');
+
 var db
 
 // Remember to change YOUR_USERNAME and YOUR_PASSWORD to your username and password! 
-MongoClient.connect('mongodb://YOUR_USERNAME:YOUR_PASSWORD@ds047955.mongolab.com:47955/star-wars-quotes', (err, database) => {
+MongoClient.connect('mongodb://localhost/star-wars-quotes', (err, database) => {
   if (err) return console.log(err)
   db = database.db('star-wars-quotes')
   app.listen(process.env.PORT || 3000, () => {
@@ -25,6 +37,41 @@ app.get('/', (req, res) => {
     res.render('index.ejs', {quotes: result})
   })
 })
+
+app.post('/single', (req, res) => {
+
+  //var queryString = req.query.nameViewText; //GET
+
+  var queryString = req.body.nameViewText; // POST
+  
+  db.collection('quotes').findOne({name:queryString}, (err, result) => {
+    if (err)
+    {
+        return console.log(err)
+    }
+    if(result)
+    {
+      res.render('index.ejs', {quotes: [result]})
+    }
+     
+    
+  })
+})
+  //res.send("All ok");
+  /*
+  db.collection('quotes').findOne({name:"Bharath"})
+    .then(result => {
+      if(result) {
+        res.render('index.ejs', {quotes: result})
+        console.log(`Successfully found document: ${result}.`)
+      } else {
+        console.log("No document matches the provided query.")
+      }
+      return result
+    })
+    .catch(err => console.error(`Failed to find document: ${err}`))
+    */
+
 
 app.post('/quotes', (req, res) => {
   db.collection('quotes').save(req.body, (err, result) => {
